@@ -16,6 +16,8 @@ function compose_email() {
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
+  document.querySelector('#show-email').style.display = 'none';
+
 
   // Clear out composition fields
   document.querySelector('#compose-recipients').value = '';
@@ -35,6 +37,8 @@ function load_mailbox(mailbox) {
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#show-email').style.display = 'none';
+
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
@@ -54,6 +58,9 @@ function load_mailbox(mailbox) {
         var sender = document.createElement('p');
         var subject = document.createElement('p');
         var time = document.createElement('p');
+
+        var button = document.createElement('button');
+        button.innerHTML ="Read Email";
 
         sender.style.display = "inline-block";
         subject.style.display = "inline-block";
@@ -86,8 +93,13 @@ function load_mailbox(mailbox) {
         mail.appendChild(sender);
         mail.appendChild(subject);
         mail.appendChild(time);
+        mail.appendChild(button);
+
+        mail.addEventListener('click', () => view_email(emails[email]['id']));
+
 
         document.querySelector('#emails-view').append(mail);
+
 
 
       }
@@ -118,6 +130,58 @@ function send_email(){
   })
   .catch(err => console.log(err));
 
+
+}
+
+function view_email(id){
+
+  // Show the show_email div and hide the others
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'none';
+  document.querySelector('#show-email').style.display = 'block';
+
+  var show_email = document.querySelector('#show-email');
+
+  // Checks if the div has a child,if a child exists then its removed
+  if(show_email.firstChild){
+    show_email.removeChild(show_email.firstChild);
+
+  }
+
+
+
+
+
+  fetch(`/emails/${id}`)
+  .then(response => response.json())
+  .then(email => {
+
+    var mail = document.createElement("div");
+    var sender = document.createElement('h5');
+    var subject = document.createElement('h6');
+    var time = document.createElement('p');
+    var body = document.createElement('p');
+    var reci = document.createElement('p');
+
+
+    sender.innerHTML = "Sender: " + email["sender"];
+    subject.innerHTML = "Subject: " + email["subject"];
+    time.innerHTML = email["timestamp"];
+    body.innerHTML = "Body of the Email:" + "<br /><br />" + email["body"];
+    reci.innerHTML = "Recipients: " + email["recipients"];
+
+
+    mail.appendChild(sender);
+    mail.appendChild(subject);
+    mail.appendChild(time);
+    mail.appendChild(body);
+    mail.appendChild(reci);
+
+    document.querySelector('#show-email').append(mail);
+
+
+
+  })
 
 
 
