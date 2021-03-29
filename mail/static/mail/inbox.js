@@ -50,12 +50,10 @@ function load_mailbox(mailbox) {
   .then(emails => {
     //Print emails
     if(emails.length == 0){
-      console.log('emails');
       email_view.innerHTML = '<p style = "font-size: large; font-weight: bold;">There are no Emails !</p>';
     }
     else{
       for(let email in emails){
-
         var mail = document.createElement("div");
 
         var sender = document.createElement('p');
@@ -78,12 +76,14 @@ function load_mailbox(mailbox) {
         subject.style.display = "inline-block";
         time.style.display = "inline-block";
         read_b.style.display = "inline-block";
+        archive.style.display = "inline-block";
 
 
         sender.style.margin = "20px";
         subject.style.margin = "20px";
         time.style.margin = "20px";
         read_b.style.margin = "20px";
+        archive.style.margin = "20px";
 
         if(emails[email]['read'] == false){
           mail.style.backgroundColor = 'white';
@@ -114,6 +114,7 @@ function load_mailbox(mailbox) {
         if(mailbox === "inbox"){
           archive.innerHTML = "Archive";
           archive.addEventListener('click',() => change_archive(emails[email]["id"],false));
+
           mail.appendChild(archive);
 
 
@@ -189,20 +190,24 @@ function view_email(id){
     var time = document.createElement('p');
     var body = document.createElement('p');
     var reci = document.createElement('p');
+    var reply = document.createElement("button");
 
 
+    reply.innerHTML = "Reply";
     sender.innerHTML = "Sender: " + email["sender"];
     subject.innerHTML = "Subject: " + email["subject"];
     time.innerHTML = email["timestamp"];
     body.innerHTML = "Body of the Email:" + "<br /><br />" + email["body"];
     reci.innerHTML = "Recipients: " + email["recipients"];
 
+    reply.addEventListener('click',() =>  reply_email(email["sender"],email["subject"],email["body"],email["timestamp"]));
 
     mail.appendChild(sender);
     mail.appendChild(subject);
     mail.appendChild(time);
     mail.appendChild(body);
     mail.appendChild(reci);
+    mail.appendChild(reply);
 
     // Check if the email has been read yet
 
@@ -224,7 +229,6 @@ function view_email(id){
 
 function change_archive(id,flag){
 
-
   //Unarchive
   if(flag == true){
     fetch(`/emails/${id}`,{
@@ -233,7 +237,9 @@ function change_archive(id,flag){
         archived: false
       })
     })
-    load_mailbox('archive');
+    setTimeout(function(){
+      load_mailbox('archive');
+    },250);
 
   }
   //Archive
@@ -244,14 +250,32 @@ function change_archive(id,flag){
         archived: true
       })
     })
-    load_mailbox('inbox');
-
-
-
+    setTimeout(function(){
+      load_mailbox('inbox');
+    },250);
   }
+}
+
+function reply_email(recipient, subject, body,time){
+
+  // Show compose view and hide other views
+  document.querySelector('#emails-view').style.display = 'none';
+  document.querySelector('#compose-view').style.display = 'block';
+  document.querySelector('#show-email').style.display = 'none';
 
 
+  // Clear out composition fields
+  document.querySelector('#compose-recipients').value = recipient;
+  if(subject.includes('Re: ')){
+    document.querySelector('#compose-subject').value = subject;
+  }
+  else{
+    document.querySelector('#compose-subject').value = 'Re: ' + subject;
+  }
+  document.querySelector('#compose-body').value = 'On ' + time + ' ' + recipient + ' wrote: ' + body;
 
+  // Form that sends the email info
+  document.querySelector('#compose-form').addEventListener('submit', send_email)
 
 
 
