@@ -31,6 +31,8 @@ function compose_email() {
 
 function load_mailbox(mailbox) {
 
+
+
   var email_view = document.querySelector('#emails-view');
 
 
@@ -48,10 +50,11 @@ function load_mailbox(mailbox) {
   .then(emails => {
     //Print emails
     if(emails.length == 0){
+      console.log('emails');
       email_view.innerHTML = '<p style = "font-size: large; font-weight: bold;">There are no Emails !</p>';
     }
     else{
-      for(email in emails){
+      for(let email in emails){
 
         var mail = document.createElement("div");
 
@@ -59,16 +62,28 @@ function load_mailbox(mailbox) {
         var subject = document.createElement('p');
         var time = document.createElement('p');
 
-        var button = document.createElement('button');
-        button.innerHTML ="Read Email";
+
+        //Button to read an email
+        var read_b = document.createElement("button");
+        read_b.innerHTML ="Read";
+
+        // Event Listener to Read an EMail
+        read_b.addEventListener('click',() => view_email(emails[email]["id"]));
+
+        //Button to archive or unarchive an email
+        var archive = document.createElement("button");
+
 
         sender.style.display = "inline-block";
         subject.style.display = "inline-block";
         time.style.display = "inline-block";
+        read_b.style.display = "inline-block";
+
 
         sender.style.margin = "20px";
         subject.style.margin = "20px";
         time.style.margin = "20px";
+        read_b.style.margin = "20px";
 
         if(emails[email]['read'] == false){
           mail.style.backgroundColor = 'white';
@@ -89,19 +104,28 @@ function load_mailbox(mailbox) {
 
 
 
-
         mail.appendChild(sender);
         mail.appendChild(subject);
         mail.appendChild(time);
-        mail.appendChild(button);
 
-        mail.addEventListener('click', () => view_email(emails[email]['id']));
+        mail.appendChild(read_b);
 
+
+        if(mailbox === "inbox"){
+          archive.innerHTML = "Archive";
+          archive.addEventListener('click',() => change_archive(emails[email]["id"],false));
+          mail.appendChild(archive);
+
+
+        }
+        else if(mailbox === "archive"){
+          archive.innerHTML = "Unarchive";
+          archive.addEventListener('click',() =>  change_archive(emails[email]["id"],true));
+          mail.appendChild(archive);
+
+        }
 
         document.querySelector('#emails-view').append(mail);
-
-
-
       }
 
 
@@ -135,6 +159,9 @@ function send_email(){
 
 function view_email(id){
 
+
+  // console.log(id);
+
   // Show the show_email div and hide the others
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'none';
@@ -142,19 +169,19 @@ function view_email(id){
 
   var show_email = document.querySelector('#show-email');
 
+
   // Checks if the div has a child,if a child exists then its removed
   if(show_email.firstChild){
     show_email.removeChild(show_email.firstChild);
 
   }
 
-
-
-
-
   fetch(`/emails/${id}`)
   .then(response => response.json())
   .then(email => {
+
+    //Creates div that will have attached all the info from the email
+
 
     var mail = document.createElement("div");
     var sender = document.createElement('h5');
@@ -177,11 +204,54 @@ function view_email(id){
     mail.appendChild(body);
     mail.appendChild(reci);
 
+    // Check if the email has been read yet
+
+    if(email["read"]== false){
+
+      fetch(`/emails/${id}`,{
+        method: 'PUT',
+        body: JSON.stringify({
+          read: true
+        })
+      })
+
+    }
+    //Adding the mail to the div show-email
     document.querySelector('#show-email').append(mail);
 
-
-
   })
+}
+
+function change_archive(id,flag){
+
+
+  //Unarchive
+  if(flag == true){
+    fetch(`/emails/${id}`,{
+      method: 'PUT',
+      body: JSON.stringify({
+        archived: false
+      })
+    })
+    load_mailbox('archive');
+
+  }
+  //Archive
+  else if(flag == false){
+    fetch(`/emails/${id}`,{
+      method: 'PUT',
+      body: JSON.stringify({
+        archived: true
+      })
+    })
+    load_mailbox('inbox');
+
+
+
+  }
+
+
+
 
 
 
